@@ -1,0 +1,5 @@
+CompileFlags:
+  Compiler: /usr/bin/avr-gcc
+  Add:
+    - -mmcu=atmega128a
+    - -I/usr/avr/include
