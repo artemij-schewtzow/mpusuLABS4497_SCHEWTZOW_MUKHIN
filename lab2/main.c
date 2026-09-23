@@ -25,29 +25,29 @@
  */
 void inline inverseScreen(){
 	_delay_us(2);
-	DDRD = COL1;
-	DDRA ^= 0xFF;
+	PORTD = COL1;
+	PORTA ^= 0xFF;
 	_delay_us(2);
-	DDRD = COL2;
-	DDRA ^= 0xFF;
+	PORTD = COL2;
+	PORTA ^= 0xFF;
 	_delay_us(2);
-	DDRD = COL3;
-	DDRA ^= 0xFF;
+	PORTD = COL3;
+	PORTA ^= 0xFF;
 	_delay_us(2);
-	DDRD = COL4;
-	DDRA ^= 0xFF;
+	PORTD = COL4;
+	PORTA ^= 0xFF;
 	_delay_us(2);
-	DDRD = COL5;
-	DDRA ^= 0xFF;
+	PORTD = COL5;
+	PORTA ^= 0xFF;
 	_delay_us(2);
-	DDRD = COL6;
-	DDRA ^= 0xFF;
+	PORTD = COL6;
+	PORTA ^= 0xFF;
 	_delay_us(2);
-	DDRD = COL7;
-	DDRA ^= 0xFF;
+	PORTD = COL7;
+	PORTA ^= 0xFF;
 	_delay_us(2);
-	DDRD = COL8;
-	DDRA ^= 0xFF;
+	PORTD = COL8;
+	PORTA ^= 0xFF;
 	_delay_us(2);
 }
 
@@ -65,29 +65,29 @@ void inline inverseScreen(){
  * */
 void inline drawLetC(){
 	_delay_us(2);
-	DDRD = COL1;
-	DDRA = 0xFF;
+	PORTD = COL1;
+	PORTA = 0xFF;
 	_delay_us(2);
-	DDRD = COL2;
-	DDRA = 0x81;
+	PORTD = COL2;
+	PORTA = 0x81;
 	_delay_us(2);
-	DDRD = COL3;
-	DDRA = 0x81;
+	PORTD = COL3;
+	PORTA = 0x81;
 	_delay_us(2);
-	DDRD = COL4;
-	DDRA = 0x81;
+	PORTD = COL4;
+	PORTA = 0x81;
 	_delay_us(2);
-	DDRD = COL5;
-	DDRA = 0x81;
+	PORTD = COL5;
+	PORTA = 0x81;
 	_delay_us(2);
-	DDRD = COL6;
-	DDRA = 0x81;
+	PORTD = COL6;
+	PORTA = 0x81;
 	_delay_us(2);
-	DDRD = COL7;
-	DDRA = 0x81;
+	PORTD = COL7;
+	PORTA = 0x81;
 	_delay_us(2);
-	DDRD = COL8;
-	DDRA = 0x81;
+	PORTD = COL8;
+	PORTA = 0x81;
 	_delay_us(2);
 }
 
@@ -105,29 +105,29 @@ void inline drawLetC(){
  * */
 void inline drawletA(){
 	_delay_us(2);
-	DDRD = COL1;
-	DDRA = 0x1F;
+	PORTD = COL1;
+	PORTA = 0x1F;
 	_delay_us(2);
-	DDRD = COL2;
-	DDRA = 0x24;
+	PORTD = COL2;
+	PORTA = 0x24;
 	_delay_us(2);
-	DDRD = COL3;
-	DDRA = 0x44;
+	PORTD = COL3;
+	PORTA = 0x44;
 	_delay_us(2);
-	DDRD = COL4;
-	DDRA = 0xC4;
+	PORTD = COL4;
+	PORTA = 0xC4;
 	_delay_us(2);
-	DDRD = COL5;
-	DDRA = 0xC4;
+	PORTD = COL5;
+	PORTA = 0xC4;
 	_delay_us(2);
-	DDRD = COL6;
-	DDRA = 0x44;
+	PORTD = COL6;
+	PORTA = 0x44;
 	_delay_us(2);
-	DDRD = COL7;
-	DDRA = 0x24;
+	PORTD = COL7;
+	PORTA = 0x24;
 	_delay_us(2);
-	DDRD = COL8;
-	DDRA = 0x1F;
+	PORTD = COL8;
+	PORTA = 0x1F;
 	_delay_us(2);
 }
 
@@ -145,29 +145,29 @@ void inline drawletA(){
 void inline drawletY(){
 
 	_delay_us(2);
-	DDRD = COL1;
-	DDRA = 0xC1;
+	PORTD = COL1;
+	PORTA = 0xC1;
 	_delay_us(2);
-	DDRD = COL2;
-	DDRA = 0x22;
+	PORTD = COL2;
+	PORTA = 0x22;
 	_delay_us(2);
-	DDRD = COL3;
-	DDRA = 0x14;
+	PORTD = COL3;
+	PORTA = 0x14;
 	_delay_us(2);
-	DDRD = COL4;
-	DDRA = 0x8;
+	PORTD = COL4;
+	PORTA = 0x8;
 	_delay_us(2);
-	DDRD = COL5;
-	DDRA = 0x10;
+	PORTD = COL5;
+	PORTA = 0x10;
 	_delay_us(2);
-	DDRD = COL6;
-	DDRA = 0x20;
+	PORTD = COL6;
+	PORTA = 0x20;
 	_delay_us(2);
-	DDRD = COL7;
-	DDRA = 0x40;
+	PORTD = COL7;
+	PORTA = 0x40;
 	_delay_us(2);
-	DDRD = COL8;
-	DDRA = 0x80;
+	PORTD = COL8;
+	PORTA = 0x80;
 	_delay_us(2);
 }
 
