@@ -23,13 +23,13 @@ void inline sound(uint16_t length_ms){
 void inline dot(){
 	PORTE |= LED_PURPLE;
 	sound(DOT_LENGTH_MS);
-	PORTE &= ~LED_PURPLE;
+	PORTE &= 0;
 }
 
 void inline dash(){
 	PORTE |= LED_BLUE;
 	sound( DASH_LENGTH_MS );
-	PORTE &= ~LED_BLUE;
+	PORTE &= 0;
 }
 // I am NOT going to write @brief for them all, they all just signal the letter
 void inline sigLetV(){
