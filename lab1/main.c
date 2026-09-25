@@ -53,42 +53,25 @@ inline void drawError(){
 		_delay_us(2);
 		PORTA &= ~(1 << i);
 	}
-}
-/*
-inline void drawPositive(int16_t val, uint8_t segs){
-	for (uint8_t i = 5 - segs ; i <= 5 ; i++){
-		PORTC = 0; //clear PORTC
-		PORTC = segments[digit(val, i)]; // put a digit to draw in portc
-		PORTA |= (1 << i);
-		_delay_us(2);
-		PORTA &= ~(1 << i);
-	}
-}
+}//-456 4
 
-inline void drawNegative(int16_t val, uint8_t segs){
-	PORTC = 0; //clear PORTC
-	PORTC = segments[10]; // put a digit to draw in portc
-	PORTA |= (1 << segs);
-	_delay_us(2);
-	PORTA &= ~(1 << segs);	
-	for (uint8_t i = 6 - segs ; i <= 5 ; i++){
-		PORTC = 0; //clear PORTC
-		PORTC = segments[digit(val, i)]; // put a digit to draw in portc
+inline void draw(int16_t val, uint8_t segs){
+	for (uint8_t i = 1; i <= 5 - segs; i++){
+		PORTC = 0;
 		PORTA |= (1 << i);
 		_delay_us(2);
 		PORTA &= ~(1 << i);
 	}
-}
-*/
-inline void draw(int16_t val, uint8_t segs){
 	if (val < 0){
 	//draw minus sign
 		PORTC = 0;
 		PORTC = segments[10];
-		PORTA |= (1 << segs);
+		PORTA |= (1 << (6 - segs));
 		_delay_us(2);
+		PORTA &= ~(1 << (6 - segs));
 	//draw the number itself	
-		for (uint8_t i = 6 - segs ; i <= 5 ; i++){
+		val = -val;
+		for (uint8_t i = 7 - segs ; i <= 5 ; i++){
 			PORTC = 0; //clear PORTC
 			PORTC = segments[digit(val, i)]; // put a digit to draw in portc
 			PORTA |= (1 << i);
@@ -97,7 +80,7 @@ inline void draw(int16_t val, uint8_t segs){
 		}
 	}
 	else{
-		for (uint8_t i = 5 - segs ; i <= 5 ; i++){
+		for (uint8_t i = 6 - segs ; i <= 5 ; i++){
 			PORTC = 0; //clear PORTC
 			PORTC = segments[digit(val, i)]; // put a digit to draw in portc
 			PORTA |= (1 << i);
@@ -123,14 +106,14 @@ inline void drawNumber(int16_t to_draw){
 				drawPositive(to_draw, num_digits);*/
 		draw(to_draw, num_digits);
 	}
-		
+		/*
 	for (uint8_t i = 5 - num_digits ; i <= 5 ; i++){
 		PORTC = 0; //clear PORTC
 		PORTC = segments[digit(to_draw, i)]; // put a digit to draw in portc
 		PORTA |= (1 << i);
 		_delay_us(2);
 		PORTA &= ~(1 << i);
-	}
+	}*/
 	
 }
 int main(void)
@@ -146,9 +129,19 @@ int main(void)
 		drawNumber(17345);
 		_delay_ms(3000);
 		PORTA = 0;
-		drawNumber(28906);
+		drawNumber(906);
 		_delay_ms(3000);
+		PORTA = 0;
 		drawNumber(0);
+		_delay_ms(3000);
+		PORTA = 0;
+		drawNumber(-32000);
+		_delay_ms(3000);
+		PORTA = 0;
+		drawNumber(-456);
+		_delay_ms(3000);
+		PORTA = 0;
+		drawNumber(-1234);
 		_delay_ms(3000);
 		PORTA = 0;
 		
