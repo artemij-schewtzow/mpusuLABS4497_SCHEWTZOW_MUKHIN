@@ -1,4 +1,4 @@
-
+#include <avr/io.h>
 #define F_CPU 11059200
 #include <util/delay.h>
 #include <stdint.h>
@@ -82,7 +82,7 @@ lcdCmd(SET_DBUS_WIDTH_8_1_LINE_5_X_7_FONT );
 lcdCmd(SET_DBUS_WIDTH_8_1_LINE_5_X_7_FONT );
 lcdCmd(SET_DBUS_WIDTH_8_1_LINE_5_X_7_FONT );
 lcdCmd(SET_DBUS_WIDTH_8_2_LINE_5_X_7_FONT );
-lcdCmd(SET_INDICATOR_OF_CURSOR_ON_NOBLINK );
+lcdCmd(SET_INDICATOR_ON_CURSOR_ON_NOBLINK );
 lcdCmd(SET_CURSOR_DIRECTION_RIGHT_NOSHIFT );
 lcdCmd(CLEAR_AND_SET_CURSOR_0 );
 }
@@ -93,7 +93,6 @@ uint8_t code(uint8_t symb){
 
 void writeSymbol(const uint8_t symb, const uint8_t adress){
 	lcdCmd(SET_DDRAM_ADRESS(adress));
-	lcdCmd(MOVE_CURSOR_RIGHT);
 	lcdData(code(symb));
 }
 void writeString(const char* str, const uint8_t len, uint8_t start_adress){
