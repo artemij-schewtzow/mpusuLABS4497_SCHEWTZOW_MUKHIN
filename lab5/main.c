@@ -41,7 +41,7 @@
 
 #define HASH 0x23
 #define STAR 0x2A
-
+#define NO_KEY_PRESSED 0xFF
 uint8_t screen_iterator = 0;
 #define SCREEN_ITERATOR (SECOND_LINE_ADRESS + (screen_iterator++) % 0x28)
 
@@ -110,23 +110,22 @@ const uint8_t map[4][3] = { {3,2,1},
 			{HASH, 0, STAR} };
 
 uint8_t getKey(){
-	for(;;){
-		for (uint8_t i = 0; i < 3; i++){
-			PORTD = (PORTD & (~0x07)) | cols[i];
+	for (uint8_t i = 0; i < 3; i++){
+		PORTD = (PORTD & (~0x07)) | cols[i];
+		_delay_us(10);
+		if (!(PINA & ((1 << PINA0)| (1 << PINA1) | (1 << PINA2) | (1 << PINA3)) ))
+			continue;
+		else{
+			_delay_ms(50);	
 			if (!(PINA & ((1 << PINA0)| (1 << PINA1) | (1 << PINA2) | (1 << PINA3)) ))
 				continue;
-			else{
-				_delay_ms(50);	
-				if (!(PINA & ((1 << PINA0)| (1 << PINA1) | (1 << PINA2) | (1 << PINA3)) ))
-					continue;
-				for (uint8_t j = 0; j < 4; j++){
-					if (PINA & rows[j])
-						return map[j][i];
-				}	
-			}
+			for (uint8_t j = 0; j < 4; j++){
+				if (PINA & rows[j])
+					return map[j][i];
+			}	
 		}
 	}
-	return 127;
+	return NO_KEY_PRESSED;
 }
 uint16_t stringToInt(char* str, int8_t len){
 	uint16_t ans = 0;
@@ -146,10 +145,19 @@ uint16_t stringToInt(char* str, int8_t len){
  * @note function will work UNTIL terminator charachter is written in
  */
 uint16_t getNumber(char buf[5], uint8_t terminator){
-	uint8_t ch;
+	uint8_t ch = NO_KEY_PRESSED;
+	uint8_t hold_safelock = ch;
 	uint8_t it = 0;
 	do{
-		ch = getKey();
+		hold_safelock = getKey();
+		ch = NO_KEY_PRESSED;
+		while (ch == NO_KEY_PRESSED){ 
+			ch = getKey(); 
+			if (ch == hold_safelock)
+				ch = NO_KEY_PRESSED;
+			else
+				hold_safelock = ch;
+		}
 		if (ch == terminator)
 			break;
 		if (ch == STAR || ch == HASH)
@@ -161,7 +169,8 @@ uint16_t getNumber(char buf[5], uint8_t terminator){
 		}
 	}while(it < 5);
 	//wait till user inputs terminator charachter
-	while (ch != terminator) ch = getKey();
+	while (ch != terminator) 
+		ch = getKey();
 
 	uint16_t ans = stringToInt(buf, it -1 );
 	return ans;

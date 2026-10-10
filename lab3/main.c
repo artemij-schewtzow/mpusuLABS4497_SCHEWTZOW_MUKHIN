@@ -160,10 +160,15 @@ int main(void){
 				for (uint8_t j = digits; j < 3; j++){
 					buf[j] = ' ';
 				}
-
+				/*
 				char str[32] = "Число нажатий: ";
 				str[27] = buf[0]; str[28] = buf[1]; str[29] = buf[2]; str[30] = '\n'; str[31] = '\0';
+				*/
+				char str[18] = "Press counter";
+				str[13] = buf[0]; str[14] = buf[1]; str[15] = buf[2]; str[16] = '\n'; str[17] = '\0';
+				
 				uartSendStr(str);
+
 			}
 			drawNumber(i);
 			_delay_ms(100);
