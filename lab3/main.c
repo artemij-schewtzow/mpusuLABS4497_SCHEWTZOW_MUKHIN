@@ -8,7 +8,6 @@
 volatile uint8_t pressCntr = 0;
 volatile uint8_t sendFlag = 0;
 
-//ctrl c + ctrl v сметодички
 uint8_t digit(uint16_t d, uint8_t m) {
 	uint8_t i = 5, a;
 	while(i){ // цикл по разрядам числа
@@ -18,7 +17,6 @@ uint8_t digit(uint16_t d, uint8_t m) {
 	}
 	return(a);
 }
-//init segments
 uint8_t segments[11] ={0x3F, 0x06, 0x5B, 0x4F, 0x66, 0x6D, 0x7D, 0x07, 0x7F, 0x6F, 0x40};
 inline uint8_t countDigits(int16_t val){
 	if (val == 0) 
@@ -39,7 +37,7 @@ inline void drawError(){
 		_delay_us(2);
 		PORTA &= ~(1 << i);
 	}
-}//-456 4
+}
 
 inline void draw(int16_t val, uint8_t segs){
 	for (uint8_t i = 1; i <= 5 - segs; i++){
@@ -96,11 +94,6 @@ void uartInit(void) {
 	UBRR0H = 0;
 	UBRR0L = 0x24;
 }
-//[]----------------------------------------------------[]
-//| Назначение: передача символа с МК на ПК |
-//| ожидание выставления бита UDRE0, |
-//| после чего кладём посылку в UDR0 |
-//[]----------------------------------------------------[]
 void uartTransmitByte(char byte) {
 	while(!(UCSR0A & (1<<UDRE0)));
 	UDR0 = byte;
@@ -112,8 +105,6 @@ void inline uartSendStr(char* str){
 		str++;
 	}
 }
-
-
 
 ISR (INT2_vect){
 	EIMSK &= ~(1 << INT2);
@@ -130,7 +121,6 @@ ISR (TIMER0_OVF_vect){
 		sendFlag = 1;
 	}
 	EIMSK |= (1 << INT2);
-	
 }
 
 int main(void){
@@ -160,19 +150,12 @@ int main(void){
 				for (uint8_t j = digits; j < 3; j++){
 					buf[j] = ' ';
 				}
-				/*
-				char str[32] = "Число нажатий: ";
-				str[27] = buf[0]; str[28] = buf[1]; str[29] = buf[2]; str[30] = '\n'; str[31] = '\0';
-				*/
 				char str[18] = "Press counter";
 				str[13] = buf[0]; str[14] = buf[1]; str[15] = buf[2]; str[16] = '\n'; str[17] = '\0';
-				
 				uartSendStr(str);
-
 			}
 			drawNumber(i);
 			_delay_ms(100);
 		}
 	}
-
 }
