@@ -125,7 +125,7 @@ ISR (INT2_vect){
 ISR (TIMER0_OVF_vect){
 	TIMSK &= ~(1 <<TOIE0);
 	TCCR0 &= ~((1 << CS02) | (1 << CS01) | (1 << CS00));
-	if (PIND & ( 1 << PIND2 )){
+	if (!(PIND & ( 1 << PIND2 ))){
 		pressCntr++;
 		sendFlag = 1;
 	}
