@@ -17,7 +17,16 @@
 #define FREQ_1000_HERZ_OCR30_VAL 21
 #define ADC_VAL_TO_OCR30_VAL(x) ( (x) / 5 + 21)
 
+#define ADP_MODE_COLOUR 0
+#define ADP_MODE_BRIGHTNESS 1
+
+volatile uint8_t adp_mode = ADP_MODE_COLOUR;
 volatile uint8_t OCR0_buf = 0;
+//to toggle brighntess you should change this value 
+uint16_t diod_upper_bound = 0x03FF;
+
+#define ADC_VAL_TO_OCR3X_VAL(x)  ( (uint16_t) (( ((uint32_t) (x)) * diod_upper_bound) / 0x03FF) ) 
+
 uint16_t readAdcChannel(uint8_t channel){
 	ADMUX = (1 <<REFS0) | channel;
 	ADCSRA |= (1 << ADSC);
@@ -31,6 +40,23 @@ uint16_t readAdcChannel(uint8_t channel){
 ISR (TIMER0_COMP_vect){
 	OCR0 = OCR0_buf;
 }
+ISR (INT2_vect){
+	EIMSK &= ~(1 << INT2);	
+	TCCR2 |= (1 << CS22) | (1 << CS21) | (1 << CS20);
+	TIMSK |= (1 << TOIE2);
+}
+
+ISR (TIMER2_OVF_vect){
+	TIMSK &= ~(1 <<TOIE2);
+	TCCR2 &= ~((1 << CS22) | (1 << CS21) | (1 << CS20));
+	if (!(PIND & ( 1 << PIND2 ))){
+		if (adp_mode == ADP_MODE_COLOUR)
+			adp_mode = ADP_MODE_BRIGHTNESS;
+		else 
+			adp_mode = ADP_MODE_COLOUR;
+	}
+	EIMSK |= (1 << INT2);
+}
 /*
  * @brief convert value from ADC to OCR30 val
  * @param val: 10-bit value that will be converted into value from 21 to 215
@@ -40,8 +66,19 @@ void inline setSoundFrequency(uint16_t val){
  // 21 ; 225
  	OCR0_buf = ADC_VAL_TO_OCR30_VAL(val);
 }
-void inline setDiodBrightness(uint16_t val){
-	OCR3A = val;
+
+void inline setDiodBrightness(uint16_t val_A, uint16_t val_B){
+	OCR3A = val_A;
+	OCR3B = val_B;
+}
+
+void inline toggleDiod(uint16_t adc_val){
+	if (adp_mode == ADP_MODE_BRIGHTNESS){
+		diod_upper_bound = adc_val;
+		setDiodBrightness(ADC_VAL_TO_OCR3X_VAL(OCR3A), ADC_VAL_TO_OCR3X_VAL(OCR3B));
+	}
+	else
+		setDiodBrightness(ADC_VAL_TO_OCR3X_VAL(adc_val), ADC_VAL_TO_OCR3X_VAL(diod_upper_bound));
 }
 
 int main(void){
@@ -61,18 +98,21 @@ int main(void){
 	//setting up PWM on timer 3
 	TCCR3A = (1 << WGM31) | //PWM phase correct, 10-bit
 		  (1 << WGM30) |
-		  (1 << COM3A1); // toggle OC3A (PORTE3) 
+		  (1 << COM3A1)|
+		  (1 << COM3B1); // toggle OC3A (PORTE3) 
 	TCCR3B = (1 <<CS30);
 	//OCR3B = 0x03FF;
 	OCR3A = 0;
 	OCR0 = 0;
-	PORTE |= (1 << PORTE4);
 	TIMSK |= (1 << OCIE0);
+
+	EICRA |= (2 << ISC20); // call interrupt on falling front
+	EIMSK |= (1 << INT2); // allow interrupts on INT2
 	sei();
 	for (;;){
 		uint16_t adc_val = readAdcChannel(CHANNEL_ADC3);
 		setSoundFrequency(adc_val);
-		setDiodBrightness(adc_val);
+		toggleDiod(adc_val);
 		_delay_ms(20);
 	}
 
