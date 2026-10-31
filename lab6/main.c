@@ -1,5 +1,5 @@
 #include <avr/io.h>
-#define F_CPU 11059200
+#define F_CPU 11059200UL
 #include <util/delay.h>
 #include <stdint.h>
 #include <avr/interrupt.h>
@@ -20,12 +20,19 @@
 #define ADP_MODE_COLOUR 0
 #define ADP_MODE_BRIGHTNESS 1
 
+/*
+ * @brief LED value, with 10 bit RGB and brightness values
+ */
+typedef struct{
+	uint16_t R;
+	uint16_t G;
+	uint16_t B;
+	uint16_t brightness;
+	} LED;
+
+LED led;
 volatile uint8_t adp_mode = ADP_MODE_COLOUR;
 volatile uint8_t OCR0_buf = 0;
-//to toggle brighntess you should change this value 
-uint16_t diod_upper_bound = 0x03FF;
-
-#define ADC_VAL_TO_OCR3X_VAL(x)  ( (uint16_t) (( ((uint32_t) (x)) * diod_upper_bound) / 0x03FF) ) 
 
 uint16_t readAdcChannel(uint8_t channel){
 	ADMUX = (1 <<REFS0) | channel;
@@ -41,15 +48,18 @@ ISR (TIMER0_COMP_vect){
 	OCR0 = OCR0_buf;
 }
 ISR (INT2_vect){
+	PORTC ^= (1 << 0);
 	EIMSK &= ~(1 << INT2);	
-	TCCR2 |= (1 << CS22) | (1 << CS21) | (1 << CS20);
+	TCCR2 |= (1 << CS22) | (1 << CS20);
 	TIMSK |= (1 << TOIE2);
 }
 
 ISR (TIMER2_OVF_vect){
+	TCNT2 = 0;
 	TIMSK &= ~(1 <<TOIE2);
 	TCCR2 &= ~((1 << CS22) | (1 << CS21) | (1 << CS20));
 	if (!(PIND & ( 1 << PIND2 ))){
+		PORTC ^= (1 << 1);
 		if (adp_mode == ADP_MODE_COLOUR)
 			adp_mode = ADP_MODE_BRIGHTNESS;
 		else 
@@ -71,20 +81,30 @@ void inline setDiodBrightness(uint16_t val_A, uint16_t val_B){
 	OCR3A = val_A;
 	OCR3B = val_B;
 }
+void updateLED(){
+	OCR3A = (uint16_t) led.B * ( (double) led.brightness / 0x03FF );
+	OCR3B = (uint16_t) led.G  * ( (double) led.brightness / 0x03FF );
+	//OCR3C = led.R;
+}
 
-void inline toggleDiod(uint16_t adc_val){
+
+void inline toggleLED(uint16_t adc_val){
 	if (adp_mode == ADP_MODE_BRIGHTNESS){
-		diod_upper_bound = adc_val;
-		setDiodBrightness(ADC_VAL_TO_OCR3X_VAL(OCR3A), ADC_VAL_TO_OCR3X_VAL(OCR3B));
+		led.brightness = adc_val;
+		updateLED();
 	}
-	else
-		setDiodBrightness(ADC_VAL_TO_OCR3X_VAL(adc_val), ADC_VAL_TO_OCR3X_VAL(diod_upper_bound));
+	else{
+		led.B = adc_val;
+		updateLED();
+	}
 }
 
 int main(void){
+	DDRC |= (1 << 0) | (1 << 1);
 	DDRE |= (1 << DDRE3) | (1 << DDRE4) | (1 << DDRE5);
 	DDRB |= (1 << DDRB4);
 	PORTE &= ~(1 << PORTE5);
+	PORTD &= ~(1 << PORTD2);
 	ADCSRA |= (1 << ADEN) |
            	  (1 << ADPS2)|
       		  (1 << ADPS1)|
@@ -98,22 +118,30 @@ int main(void){
 	//setting up PWM on timer 3
 	TCCR3A = (1 << WGM31) | //PWM phase correct, 10-bit
 		  (1 << WGM30) |
-		  (1 << COM3A1)|
-		  (1 << COM3B1); // toggle OC3A (PORTE3) 
+		  (1 << COM3A1)| //toggle OCR3A (PORTE3)
+		  (1 << COM3B1); //toggle OCR3B (PORTE4) 
+		  
 	TCCR3B = (1 <<CS30);
-	//OCR3B = 0x03FF;
+	OCR3B = 0x03FF;
 	OCR3A = 0;
 	OCR0 = 0;
 	TIMSK |= (1 << OCIE0);
 
-	EICRA |= (2 << ISC20); // call interrupt on falling front
-	EIMSK |= (1 << INT2); // allow interrupts on INT2
+	EICRA = (2 << ISC20); // call interrupt on falling edge
+	EIMSK = (1 << INT2); // allow interrupts on INT2
+	led.R = 0;
+	led.G = 0x03FF;
+	led.B = 0;
+	led.brightness = 128;
 	sei();
 	for (;;){
+		
 		uint16_t adc_val = readAdcChannel(CHANNEL_ADC3);
 		setSoundFrequency(adc_val);
-		toggleDiod(adc_val);
+		toggleLED(adc_val);
 		_delay_ms(20);
 	}
 
 }
+
+
