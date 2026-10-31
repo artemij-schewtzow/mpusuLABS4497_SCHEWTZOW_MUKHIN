@@ -1,15 +1,25 @@
+/*
+ * @file main.c
+ * @brief Вторая лабораторная работа: темы - работа с таймерами, прерывания
+ * @author Шевцов А.И. Мухин А.П.
+ * @date 2026-10-31
+ */
+
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #define F_CPU 11059200
 #include <util/delay.h>
 #include <stdint.h>
 
-uint8_t is_inverted = 0;
-uint16_t invert_timer = 0;
+volatile uint8_t is_inverted = 0;
+volatile uint16_t invert_timer = 0;
 const uint8_t to_drawA[16] = {0x30, 0x30, 0x30, 0x30, 0xFF, 0xFF,0x30, 0x30,0x30, 0x30,0x30, 0x30, 0xFF, 0xFF, 0x30, 0x30};
 const uint8_t to_drawC[16] = {0x30, 0x30, 0xFF, 0xFF, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0xFF, 0xFF, 0x30, 0x30, 0x30, 0x30};
 volatile uint8_t drawIt = 0;
 
+/*
+ * @brief draws one frame of an image
+ */
 ISR (TIMER3_OVF_vect){
 		invert_timer++;
 		if (invert_timer >= 2000){

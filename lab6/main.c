@@ -1,3 +1,10 @@
+/*
+ * @file main.c
+ * @brief Шестая лабораторная работа: темы - АЦП, ШИМ 
+ * @author Шевцов А.И. Мухин А.П.
+ * @date 2026-10-31
+ */
+
 #include <avr/io.h>
 #define F_CPU 11059200UL
 #include <util/delay.h>
@@ -34,6 +41,10 @@ LED led;
 volatile uint8_t adp_mode = ADP_MODE_COLOUR;
 volatile uint8_t OCR0_buf = 0;
 
+/*
+ * @brief get a 10-bit value from adc channel
+ * @param channel - adc channel
+ */
 uint16_t readAdcChannel(uint8_t channel){
 	ADMUX = (1 <<REFS0) | channel;
 	ADCSRA |= (1 << ADSC);
@@ -44,22 +55,29 @@ uint16_t readAdcChannel(uint8_t channel){
 	return low | high;
 }
 
+/*
+ * @brief change frequency of the sound
+ */
 ISR (TIMER0_COMP_vect){
 	OCR0 = OCR0_buf;
 }
+/*
+ * @brief enable timer 2, permit interrupts on overflow
+ */
 ISR (INT2_vect){
-	PORTC ^= (1 << 0);
 	EIMSK &= ~(1 << INT2);	
 	TCCR2 |= (1 << CS22) | (1 << CS20);
 	TIMSK |= (1 << TOIE2);
 }
 
+/*
+ * @brief check for button debounce, change control mode of adp
+ */
 ISR (TIMER2_OVF_vect){
 	TCNT2 = 0;
 	TIMSK &= ~(1 <<TOIE2);
 	TCCR2 &= ~((1 << CS22) | (1 << CS21) | (1 << CS20));
 	if (!(PIND & ( 1 << PIND2 ))){
-		PORTC ^= (1 << 1);
 		if (adp_mode == ADP_MODE_COLOUR)
 			adp_mode = ADP_MODE_BRIGHTNESS;
 		else 
@@ -77,17 +95,20 @@ void inline setSoundFrequency(uint16_t val){
  	OCR0_buf = ADC_VAL_TO_OCR30_VAL(val);
 }
 
-void inline setDiodBrightness(uint16_t val_A, uint16_t val_B){
-	OCR3A = val_A;
-	OCR3B = val_B;
-}
+/*
+ * @brief update colour and brightness on LED
+ * @note since my variant required Green to Light Blue transition, code for red colour is not written
+ */
 void updateLED(){
 	OCR3A = (uint16_t) led.B * ( (double) led.brightness / 0x03FF );
 	OCR3B = (uint16_t) led.G  * ( (double) led.brightness / 0x03FF );
 	//OCR3C = led.R;
 }
 
-
+/*
+ * @brief toggle LED parameters based on value from ADC
+ * @param adc_val - value from ADC
+ */
 void inline toggleLED(uint16_t adc_val){
 	if (adp_mode == ADP_MODE_BRIGHTNESS){
 		led.brightness = adc_val;
@@ -100,7 +121,6 @@ void inline toggleLED(uint16_t adc_val){
 }
 
 int main(void){
-	DDRC |= (1 << 0) | (1 << 1);
 	DDRE |= (1 << DDRE3) | (1 << DDRE4) | (1 << DDRE5);
 	DDRB |= (1 << DDRB4);
 	PORTE &= ~(1 << PORTE5);
@@ -134,14 +154,10 @@ int main(void){
 	led.B = 0;
 	led.brightness = 128;
 	sei();
-	for (;;){
-		
+	for (;;){		
 		uint16_t adc_val = readAdcChannel(CHANNEL_ADC3);
 		setSoundFrequency(adc_val);
 		toggleLED(adc_val);
 		_delay_ms(20);
 	}
-
 }
-
-

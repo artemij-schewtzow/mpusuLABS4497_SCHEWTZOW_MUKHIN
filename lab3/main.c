@@ -1,3 +1,9 @@
+/*
+ * @file main.c
+ * @brief Третья лабораторная работа: темы - внешние прерывания, UART
+ * @author Шевцов А.И. Мухин А.П.
+ * @date 2026-10-31
+ */
 
 #include <avr/io.h>
 #define F_CPU 11059200
@@ -8,16 +14,30 @@
 volatile uint8_t pressCntr = 0;
 volatile uint8_t sendFlag = 0;
 
+
+//codes for segments
+uint8_t segments[11] ={0x3F, 0x06, 0x5B, 0x4F, 0x66, 0x6D, 0x7D, 0x07, 0x7F, 0x6F, 0x40};
+
+/*
+ * @brief returns value of a given digit of the given number
+ * @param d - number
+ * @param m - digit
+ * @note function from tbook
+ */
 uint8_t digit(uint16_t d, uint8_t m) {
 	uint8_t i = 5, a;
-	while(i){ // цикл по разрядам числа
-		a = d%10; // выделяем очередной разряд
-		if(i-- == m) break; // выделен ли желаемый разряд
-		d /= 10; // уменьшаем число в 10 раз
+	while(i){ 
+		a = d%10; 
+		if(i-- == m) break; 
+		d /= 10; 
 	}
 	return(a);
 }
-uint8_t segments[11] ={0x3F, 0x06, 0x5B, 0x4F, 0x66, 0x6D, 0x7D, 0x07, 0x7F, 0x6F, 0x40};
+
+/*
+ * @brief return total amount of digits of a given number
+ * @param val - number
+ */
 inline uint8_t countDigits(int16_t val){
 	if (val == 0) 
 		return 1;
@@ -29,16 +49,23 @@ inline uint8_t countDigits(int16_t val){
 	return ret;
 }
 
+/*
+ * @brief output '-' on all displays
+ */
 inline void drawError(){
 	for (uint8_t i = 1 ; i <= 5 ; i++){
-		PORTC = 0; //clear PORTC
-		PORTC = segments[10]; // put a digit to draw in portc
+		PORTC = 0; 
+		PORTC = segments[10]; 
 		PORTA |= (1 << i);
 		_delay_us(2);
 		PORTA &= ~(1 << i);
 	}
 }
-
+/*
+ * @brief draw a number on displays
+ * @param val - number
+ * @param segs - amount of displays required
+ */
 inline void draw(int16_t val, uint8_t segs){
 	for (uint8_t i = 1; i <= 5 - segs; i++){
 		PORTC = 0;
@@ -56,8 +83,8 @@ inline void draw(int16_t val, uint8_t segs){
 	//draw the number itself	
 		val = -val;
 		for (uint8_t i = 7 - segs ; i <= 5 ; i++){
-			PORTC = 0; //clear PORTC
-			PORTC = segments[digit(val, i)]; // put a digit to draw in portc
+			PORTC = 0; 
+			PORTC = segments[digit(val, i)]; 
 			PORTA |= (1 << i);
 			_delay_us(2);
 			PORTA &= ~(1 << i);
@@ -65,8 +92,8 @@ inline void draw(int16_t val, uint8_t segs){
 	}
 	else{
 		for (uint8_t i = 6 - segs ; i <= 5 ; i++){
-			PORTC = 0; //clear PORTC
-			PORTC = segments[digit(val, i)]; // put a digit to draw in portc
+			PORTC = 0; 
+			PORTC = segments[digit(val, i)]; 
 			PORTA |= (1 << i);
 			_delay_us(2);
 			PORTA &= ~(1 << i);
@@ -74,19 +101,24 @@ inline void draw(int16_t val, uint8_t segs){
 	}
 }
 
+/*
+ * @brief wrapper function for draw() and drawError()
+ * @param to_draw - the number to draw
+ */
 inline void drawNumber(int16_t to_draw){
 	uint8_t num_digits = countDigits(to_draw);
 	if (to_draw < 0)
 		num_digits++;
-		
-	if (num_digits > 5){
-			drawError();
-	}
-	else{
+	if (num_digits > 5)
+		drawError();
+	else
 		draw(to_draw, num_digits);
-	}	
 }
 
+/*
+ * @brief initialise UART
+ * @note function from tbook
+ */
 void uartInit(void) {
 	UCSR0B |= (1 << TXEN0); // включение передатчика
 	UCSR0C |= (1 << UCSZ01) | (1 << UCSZ00);
@@ -94,11 +126,21 @@ void uartInit(void) {
 	UBRR0H = 0;
 	UBRR0L = 0x24;
 }
+
+/*
+ * @brief transmit a byte via UART
+ * @param byte - byte
+ */
 void uartTransmitByte(char byte) {
 	while(!(UCSR0A & (1<<UDRE0)));
 	UDR0 = byte;
 }
 
+
+/*
+ * @brief transmit a C string via UART
+ * @param str - string
+ */
 void inline uartSendStr(char* str){
 	while (*str){
 		uartTransmitByte(*str);
@@ -106,13 +148,17 @@ void inline uartSendStr(char* str){
 	}
 }
 
+/*
+ * @brief start timer0 and allow interrupts on overflow
+ */
 ISR (INT2_vect){
 	EIMSK &= ~(1 << INT2);
-	
 	TCCR0 |= (1 << CS02) | (1 << CS01) | (1 << CS00);
 	TIMSK |= (1 << TOIE0);
 }
-
+/*
+ * @brief check for button debounce, increment press counter and set flag for sending a value via UART
+ */
 ISR (TIMER0_OVF_vect){
 	TIMSK &= ~(1 <<TOIE0);
 	TCCR0 &= ~((1 << CS02) | (1 << CS01) | (1 << CS00));
@@ -130,7 +176,7 @@ int main(void){
 	//clear PORTA
 	PORTA = 0;			
 
-	EICRA |= (2 << ISC20); // call interrupt on falling front
+	EICRA |= (2 << ISC20); // call interrupt on falling edge
 	EIMSK |= (1 << INT2); // allow interrupts on INT2
 	sei();
 

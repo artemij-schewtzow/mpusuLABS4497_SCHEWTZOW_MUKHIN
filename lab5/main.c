@@ -1,3 +1,11 @@
+/*
+ * @file main.c
+ * @brief Пятая лабораторная работа: темы - взаимодействие с другим контроллером 
+ * @details Конкретно за эту лабу я могу поручиться, что это плохой код, списывать ее не стоит, костыль на костыле, даже чатджибиди лучше нагенерит
+ * @author Шевцов А.И. Мухин А.П.
+ * @date 2026-10-31
+ */
+
 #include <avr/io.h>
 #define F_CPU 11059200
 #include <util/delay.h>
@@ -42,6 +50,7 @@
 #define HASH 0x23
 #define STAR 0x2A
 #define NO_KEY_PRESSED 0xFF
+//actual slop
 uint8_t screen_iterator = 0;
 #define SCREEN_ITERATOR (SECOND_LINE_ADRESS + (screen_iterator++) % 0x28)
 
@@ -52,7 +61,10 @@ uint8_t tabCon[] ={0x41,0xA0,0x42,0xA1,0xE0,0x45,0xA3,0xA4,
 0xBC,0xBD,0x6F,0xBE,0x70,0x63,0xBF,0x79,0x5C,0x78,0xE5,0xC0,
 0xC1,0xE6,0xC2,0xC3,0xC4,0xC5,0xC6,0xC7};
 
-
+/*
+ * @brief send data to lcd
+ * @param data - data
+ */
 void lcdData(uint8_t data){
 	DDRC = 0xFF;
 	DDRD |= (1 << E) | (1 << RS);
@@ -64,6 +76,11 @@ void lcdData(uint8_t data){
 	_delay_ms(20); 
 }
 
+/*
+ * @brief send a command to lcd
+ * @param cmd - command, one of the macros on lines 17,44 
+ * @note function from tbook
+ */
 void lcdCmd(uint8_t cmd) {
 DDRC = 0xFF;
 DDRD |= (1 << E) | (1 << RS);
@@ -75,7 +92,10 @@ PORTD &= ~(1 << E);
 _delay_ms(5);
 }
 
-
+/*
+ * @brief initialise lcd
+ * @note function from tbook
+ */
 void lcdInit(void) {
 DDRC = 0xFF;
 lcdCmd(SET_DBUS_WIDTH_8_1_LINE_5_X_7_FONT );
@@ -87,14 +107,31 @@ lcdCmd(SET_CURSOR_DIRECTION_RIGHT_NOSHIFT );
 lcdCmd(CLEAR_AND_SET_CURSOR_0 );
 }
 
+/*
+ * @brief coding symbols for cyrillics, using tabCon 
+ * @param symb - symbol
+ * @note function from tbook
+ */
 uint8_t code(uint8_t symb){
 	return (symb >= 192)?tabCon[symb - 192] : symb;
 }
 
+/*
+ * @brief write a symbol on lcd screen
+ * @param symb - symbol
+ * @param adress - adress of the symbol, a value from ranges 0x00 - 0x27 or 0x40 - 0x67
+ */
 void writeSymbol(const uint8_t symb, const uint8_t adress){
 	lcdCmd(SET_DDRAM_ADRESS(adress));
 	lcdData(code(symb));
 }
+
+/*
+ * @brief write a string on lcd screen
+ * @param str - string
+ * @param len - length of the string
+ * @param start_adress - adress of the first symbol in the string, a value from ranges 0x00 - 0x27 or 0x40 - 0x67
+ */
 void writeString(const char* str, const uint8_t len, uint8_t start_adress){
 	for (uint8_t i = 0; i < len; i++){
 		writeSymbol(str[i], start_adress + i);
@@ -109,6 +146,9 @@ const uint8_t map[4][3] = { {3,2,1},
 			{9,8,7}, 
 			{HASH, 0, STAR} };
 
+/*
+ * @brief currently pressed key, if no key is pressed returns NO_KEY_PRESSED
+ */
 uint8_t getKey(){
 	for (uint8_t i = 0; i < 3; i++){
 		PORTD = (PORTD & (~0x07)) | cols[i];
@@ -127,6 +167,12 @@ uint8_t getKey(){
 	}
 	return NO_KEY_PRESSED;
 }
+
+/*
+ * @brief get an uint16_t value, from string 
+ * @param str - string
+ * @param len - length of the string
+ */
 uint16_t stringToInt(char* str, int8_t len){
 	uint16_t ans = 0;
 	uint16_t digit = 1;
@@ -176,6 +222,10 @@ uint16_t getNumber(char buf[5], uint8_t terminator){
 	return ans;
 }
 
+/*
+ * @brief return total amount of digits of a given number
+ * @param val - number
+ */
 uint8_t digit(uint16_t val){
 	if (val == 0) return 1;
 	uint8_t ans = 0;
@@ -185,7 +235,14 @@ uint8_t digit(uint16_t val){
 	}
 	return ans;
 }
-//I mean explicytly passing digits is probably slop code, bu IN THIS EXACT LAB I DONOT WANT TO CALUCLATE DIGITS TWICE
+
+/*
+ * @brief get a string from uint16_t value
+ * @param buf - buffer for the string
+ * @param val - integer
+ * @param dig - amount of digits of this integer
+ * @note I don`t even remember why I decided that passing digits instead of calculating them in it is NOT chatGPT ahh code
+ */
 void intToString(char* buf, uint16_t val, uint8_t dig){
 	for (uint8_t i = 1; i <= dig; i++){
 		buf[dig - i] ='0' + ( val %10);
@@ -201,6 +258,7 @@ int main(void){
 	char numStr[5];
 	uint8_t dig;
 	for(;;){
+		//stop it, get some help
 		num = getNumber(numStr, STAR);
 		writeSymbol(STAR, SCREEN_ITERATOR);
 		num *= getNumber (numStr, HASH);
